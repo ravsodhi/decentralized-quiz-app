@@ -13,7 +13,15 @@ contract Quiz
         address addr;
     }
 
+    struct Question
+    {
+        bytes32 statement;
+        bytes32[] options;
+        uint ansInd;
+    }
+
     Player[] players;
+    Question[] questions;
 
     constructor (uint _N, uint _pFee)
     public
@@ -72,4 +80,40 @@ contract Quiz
         }
         return true;
     }
+
+
+    function addQuestion(bytes32 _statement, bytes32[] _opts, uint _ansInd) // bytes32 uses less gas than string
+    onlyModerator()
+    public
+    {
+        questions.push(Question({
+            statement: _statement,
+            options: _opts,
+            ansInd: _ansInd
+        }));
+        // add question to questions array
+        //TODO: prevent invalid question/options
+    }
+
+    // Player should not be able to know a question in advance
+    // Player should get a question, and an identifier,
+    //TODO: some time constraint to answer the question, once it has been retrieved by player?
+    function getQuestion() // should return statement and options somehow
+    {
+
+    }
+
+    // Player should be able to answer a question,
+    function answerQuestion() // Args? quesIdentifier, ansIndex
+    {
+
+    }
+
+    // Check whether answers given by players are correct or incorrect
+    function checkAnswers()
+    onlyModerator()
+    {
+
+    }
+
 }
