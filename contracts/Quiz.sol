@@ -34,9 +34,9 @@ contract Quiz
     }
 
     // Modifiers
-    modifier onlyModerator()
+    modifier onlyBy(address account)
     {
-        require(msg.sender == moderator, "Only moderator is allowed to call this method");
+        require(msg.sender == account, "Not authorised to call this method");
         _;
     }
     modifier onlyIfTrue(bool x)
@@ -44,6 +44,7 @@ contract Quiz
         require(x == true, "Value of variable should be true");
         _;
     }
+    
     // Events
     event quizCreated(uint _N, uint _pFee);
     event playerRegistered(address _addr);
@@ -83,7 +84,7 @@ contract Quiz
 
 
     function addQuestion(bytes32 _statement, bytes32[] _opts, uint _ansInd) // bytes32 uses less gas than string
-    onlyModerator()
+    onlyBy(moderator)
     public
     {
         questions.push(Question({
@@ -111,7 +112,7 @@ contract Quiz
 
     // Check whether answers given by players are correct or incorrect
     function checkAnswers()
-    onlyModerator()
+    onlyBy(moderator)
     {
 
     }
