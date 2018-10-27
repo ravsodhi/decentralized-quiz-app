@@ -16,7 +16,7 @@ contract Quiz
     struct Question
     {
         bytes32 statement;
-        bytes32[] options;
+        // bytes32[] options;
         uint ansInd;
     }
 
@@ -44,13 +44,43 @@ contract Quiz
         require(x == true, "Value of variable should be true");
         _;
     }
+<<<<<<< HEAD
     
+=======
+    modifier isNotPlayer()
+    {
+        bool flag = false;
+        for(uint i=0; i< players.length; i++)
+        {
+            if(msg.sender == players[i].addr)
+            {
+                flag = true;
+            }
+        }
+        require(flag == false, "Player already registered");
+        _;
+    }
+    modifier isPlayer()
+    {
+        bool flag = false;
+        for(uint i=0; i< players.length; i++)
+        {
+            if(msg.sender == players[i].addr)
+            {
+                flag = true;
+            }
+        }
+        require(flag == true, "Player is registered");
+        _;
+    }
+>>>>>>> 5e2ce8ed86ed91badaf2d17b6e5ec1ed547f85fd
     // Events
     event quizCreated(uint _N, uint _pFee);
     event playerRegistered(address _addr);
 
     // Functions
     function register()
+    isNotPlayer()
     payable
     public
     {
@@ -83,13 +113,18 @@ contract Quiz
     }
 
 
+<<<<<<< HEAD
     function addQuestion(bytes32 _statement, bytes32[] _opts, uint _ansInd) // bytes32 uses less gas than string
     onlyBy(moderator)
+=======
+    function addQuestion(bytes32 _statement,/* bytes32[] _opts, */ uint _ansInd) // bytes32 uses less gas than string
+    onlyModerator()
+>>>>>>> 5e2ce8ed86ed91badaf2d17b6e5ec1ed547f85fd
     public
     {
         questions.push(Question({
             statement: _statement,
-            options: _opts,
+            // options: _opts,
             ansInd: _ansInd
         }));
         // add question to questions array
@@ -99,9 +134,11 @@ contract Quiz
     // Player should not be able to know a question in advance
     // Player should get a question, and an identifier,
     //TODO: some time constraint to answer the question, once it has been retrieved by player?
-    function getQuestion() // should return statement and options somehow
+    function getQuestions() // should return statement and/or options somehow
+    isPlayer()
+    returns(bytes32)
     {
-
+        
     }
 
     // Player should be able to answer a question,
