@@ -51,13 +51,51 @@ contract('Full Test', (accounts) => {
             assert.fail("Player not registered");
         }
     })
-    it('5th Registrations', async () => {
+    it('5th Registration', async () => {
         try {
             await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player5 });
             assert.fail("Player registered");
         }
         catch (e) {
             assert.ok("True", "Player not registered");
+        }
+    })
+    it('Add Questions', async()=>{
+        try{
+            await contractInstance.addQuestion("What is 2 + 2?", "4", {from: moderator});
+            await contractInstance.addQuestion("What is 5 + 1?", "6", { from: moderator });
+            await contractInstance.addQuestion("What is 9 + 11?", "20", { from: moderator });
+            assert.ok("True", "Questions added");
+        }
+        catch(e){
+            assert.fail("Questions not added");
+        }
+    })
+    it('Get Questions', async()=>{
+        try{
+            const q1 = await contractInstance.getQuestion.call(0, { from: player1 });
+            const q2 = await contractInstance.getQuestion.call(1, { from: player2 });
+            const q3 = await contractInstance.getQuestion.call(2, { from: player3 });
+
+            // const q = await contractInstance.questions(0);
+            console.log(q1);
+            console.log(q2);
+            console.log(q3);
+            assert.ok("True", "Question fetched successfully");
+        }
+        catch(e){
+            assert.fail("Question not fetched");
+        }
+    })
+    it('Answer Questions', async()=>{
+        try{
+            await contractInstance.answerQuestion(0, "4", {from: player1});
+            assert.ok("True", "Question answered successfully");
+            // const x = await contractInstance.QWinPlayers(0);
+            // console.log(x);
+        }
+        catch(e){
+            assert.fail("Question not answered");
         }
     })
 })
