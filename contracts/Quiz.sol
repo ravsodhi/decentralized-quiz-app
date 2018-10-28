@@ -188,4 +188,26 @@ contract Quiz
 
     // }
 
+    function prizeDetermine()
+    onlyAfter(quizEnded)
+    onlyBy(moderator)
+    private
+    {
+        for(int i=1;i<5;i++){
+            uint reward = (3/16*tFee)/QWinPlayers[_qInd].length;
+            prizeDetHelper(i, reward);
+        }
+        prizeDet = true;
+    }
+
+    function prizeDetHelper(uint _qInd, uint256 reward)
+    onlyby(moderator)
+    onlyAfter(quizEnded)
+    {
+        for(int i=0; i<QWinPlayers[_qInd].length;i++)
+        {
+            pendingReturns[QWinPlayers[_qInd][i]]+=reward;
+        }
+    }
+
 }
