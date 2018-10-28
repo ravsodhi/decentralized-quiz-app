@@ -14,7 +14,8 @@ contract Quiz
     mapping(address => uint) retrievedQNo;
     mapping(address => uint) playerQNo;
     mapping(address => uint) playerAnsNo;
-    mapping(uint => address[]) QWinPlayers;
+    mapping(uint => address[]) public QWinPlayers;
+
     struct Player
     {
         address addr;
@@ -22,9 +23,10 @@ contract Quiz
 
     struct Question
     {
-        bytes32 statement;
-        bytes32[] options;
-        uint ansInd;
+        string statement;
+        // string[] options;
+        // uint ansInd;
+        string ans;
     }
 
     Player[] players;
@@ -34,10 +36,10 @@ contract Quiz
     public
     {
         moderator = msg.sender;
-        quizStart=now;
         N = _N;
-        quizEnded = now + quizDuration;
         pFee = _pFee;
+        quizStart=now;
+        quizEnded = now + quizDuration;
 
         emit quizCreated(N, pFee);
     }
@@ -81,12 +83,12 @@ contract Quiz
     }
     modifier onlyBefore(uint256 time)
     {
-        require(now<time, "too late");
+        require(now < time, "Too late");
         _;
     }
     modifier onlyAfter(uint256 time)
     {
-        require(now>time, "too early");
+        require(now > time, "Too early");
         _;
     }
     // Events
@@ -129,14 +131,16 @@ contract Quiz
     }
 
 
-    function addQuestion(bytes32 _statement, bytes32[] _opts, uint _ansInd) // bytes32 uses less gas than string
+    function addQuestion(string _statement,/*  string[] _opts,  uint _ansInd*/ string _ans) // bytes32 uses less gas than string
     onlyBy(moderator)
     public
     {
         questions.push(Question({
             statement: _statement,
-            options: _opts,
-            ansInd: _ansInd
+            // options: _opts,
+            // ansInd: _ansInd
+            ans: _ans
+
         }));
         // add question to questions array
         //TODO: prevent invalid question/options
@@ -144,43 +148,50 @@ contract Quiz
 
     // Player should not be able to know a question in advance
     // Player should get a question, and an identifier,
-    //TODO: some time constraint to answer the question, once it has been retrieved by player?
-    function getQuestions(uint _qInd) // should return statement and/or options somehow
+    // TODO: some time constraint to answer the question, once it has been retrieved by player?
+
+    function getQuestion(uint _qInd) // should return statement and/or options somehow
     isPlayer()
     onlyBefore(quizEnded)
     public
-    returns(bytes32[])
+    returns(string)
     {
-        require(playerQNo[msg.sender]==_qInd-1, "you are accessing an invalid question");
+        // require(playerQNo[msg.sender] ==  _qInd-1, "You are accessing an invalid question");
         // if (playerQNo[msg.sender] == _qInd-1){
-        playerQNo[msg.sender] = _qInd;
-        bytes32[] res;
-        bytes32 question = questions[_qInd].statement;
-        bytes32[] options = questions[_qInd].options;
-        res[0]=question;
-        for(uint i=1;i<=options.length;i++)
-        {
-            res[i] = options[i-1];
-        }
+        // playerQNo[msg.sender] = _qInd;
+        require(_qInd < 4, "Invalid index for question");
+        // string[] memory res;
+        string question = questions[_qInd].statement;
+        // string[] memory options = questions[_qInd].options;
         // res[0]=question;
-        // res[0]=questions[_qInd].statement;
-        // res[1]=questions[_qInd].options;
-        return res;
+        // for(uint i=1;i<=options.length;i++)
+        // {
+            // res[i] = options[i-1];
         // }
-        // retrieveTime[msg.sender]=now;
-
+        return question;
     }
-
+    function compareStrings (string a, string b)
+    view
+    returns (bool)
+    {
+       return keccak256(a) == keccak256(b);
+    }
     // Player should be able to answer a question,
-    function answerQuestion(uint _qInd, uint optNo) // Args? quesIdentifier, ansIndex
+    function answerQuestion(uint _qInd/* , uint optNo */, string ans) // Args? quesIdentifier, ansIndex
     isPlayer()
     onlyBefore(quizEnded)
     public
     {
-        require(playerQNo[msg.sender]==_qInd, "Answering wrong question.");
-        require(playerAnsNo[msg.sender]!=_qInd, "You already answered this question.");
-        if(questions[_qInd].ansInd==optNo) QWinPlayers[_qInd].push(msg.sender);
-        playerAnsNo[msg.sender]=_qInd;
+        // require(playerQNo[msg.sender] == _qInd, "Answering wrong question.");
+        // require(playerAnsNo[msg.sender] != _qInd, "You already answered this question.");
+        // if(questions[_qInd].ansInd == optNo)
+       /*  if(compareStrings(questions[_qInd].ans, ans))
+        {
+            QWinPlayers[_qInd].push(msg.sender);
+        } */
+        QWinPlayers[_qInd].push(msg.sender);
+
+        // playerAnsNo[msg.sender]=_qInd;
     }
     // Check whether answers given by players are correct or incorrect
     // function checkAnswers()
@@ -194,7 +205,8 @@ contract Quiz
     onlyBy(moderator)
     private
     {
-        for(uint i=1;i<5;i++){
+        for(uint i=1;i<5;i++)
+        {
             uint reward = (3*tFee)/(16*QWinPlayers[_qInd].length);
             prizeDetHelper(i, reward);
         }
@@ -208,7 +220,7 @@ contract Quiz
     {
         for(uint i=0; i<QWinPlayers[_qInd].length;i++)
         {
-            pendingReturns[QWinPlayers[_qInd][i]]+=reward;
+            pendingReturns[QWinPlayers[_qInd][i]] += reward;
         }
     }
 
