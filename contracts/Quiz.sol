@@ -175,6 +175,7 @@ contract Quiz
     function answerQuestion(uint _qInd, uint optNo) // Args? quesIdentifier, ansIndex
     isPlayer()
     onlyBefore(quizEnded)
+    public
     {
         require(playerQNo[msg.sender]==_qInd, "Answering wrong question.");
         require(playerAnsNo[msg.sender]!=_qInd, "You already answered this question.");
@@ -188,23 +189,24 @@ contract Quiz
 
     // }
 
-    function prizeDetermine()
+    function prizeDetermine(uint _qInd)
     onlyAfter(quizEnded)
     onlyBy(moderator)
     private
     {
-        for(int i=1;i<5;i++){
-            uint reward = (3/16*tFee)/QWinPlayers[_qInd].length;
+        for(uint i=1;i<5;i++){
+            uint reward = (3*tFee)/(16*QWinPlayers[_qInd].length);
             prizeDetHelper(i, reward);
         }
         prizeDet = true;
     }
 
     function prizeDetHelper(uint _qInd, uint256 reward)
-    onlyby(moderator)
+    onlyBy(moderator)
     onlyAfter(quizEnded)
+    private
     {
-        for(int i=0; i<QWinPlayers[_qInd].length;i++)
+        for(uint i=0; i<QWinPlayers[_qInd].length;i++)
         {
             pendingReturns[QWinPlayers[_qInd][i]]+=reward;
         }
