@@ -81,7 +81,7 @@ contract Quiz
     }
     modifier onlyBefore(uint256 time)
     {
-        require(now<time, "too late"):
+        require(now<time, "too late");
         _;
     }
     modifier onlyAfter(uint256 time)
@@ -149,12 +149,23 @@ contract Quiz
     isPlayer()
     onlyBefore(quizEnded)
     public
-    returns(bytes32)
+    returns(bytes32[])
     {
         require(playerQNo[msg.sender]==_qInd-1, "you are accessing an invalid question");
         // if (playerQNo[msg.sender] == _qInd-1){
         playerQNo[msg.sender] = _qInd;
-        return questions[_qInd];
+        bytes32[] res;
+        bytes32 question = questions[_qInd].statement;
+        bytes32[] options = questions[_qInd].options;
+        res[0]=question;
+        for(uint i=1;i<=options.length;i++)
+        {
+            res[i] = options[i-1];
+        }
+        // res[0]=question;
+        // res[0]=questions[_qInd].statement;
+        // res[1]=questions[_qInd].options;
+        return res;
         // }
         // retrieveTime[msg.sender]=now;
 
