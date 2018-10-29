@@ -7,14 +7,9 @@ contract Quiz
     uint public tFee = 0;
     uint256 public quizEnded;
     uint256 public quizStart;
-    bool public prizeDet=false;
-    // bool quizEnded = false;
+    bool public prizeDetermined=false;
     mapping(address => uint256) public pendingReturns;
-    mapping(address =>  uint256[]) retrieveTime;
-    mapping(address => uint) retrievedQNo;
-    mapping(address => uint) playerQNo;
-    mapping(address => uint) playerAnsNo;
-    mapping(uint => address[]) public QWinPlayers;
+    mapping(uint => address[]) public winners;
 
     struct Player
     {
@@ -24,8 +19,6 @@ contract Quiz
     struct Question
     {
         string statement;
-        // string[] options;
-        // uint ansInd;
         string ans;
     }
 
@@ -38,7 +31,7 @@ contract Quiz
         moderator = msg.sender;
         N = _N;
         pFee = _pFee;
-        quizStart=now;
+        quizStart = now;
         quizEnded = now + quizDuration;
 
         emit quizCreated(N, pFee);
@@ -91,11 +84,22 @@ contract Quiz
         require(now > time, "Too early");
         _;
     }
+
     // Events
     event quizCreated(uint _N, uint _pFee);
     event playerRegistered(address _addr);
 
     // Functions
+
+    /* Helper function to compare two strings */
+    function compareStrings (string a, string b)
+    view
+    returns (bool)
+    {
+       return keccak256(a) == keccak256(b);
+    }
+
+    /* Player registers with a minimum fee, set to 100 wei */
     function register()
     isNotPlayer()
     payable
@@ -104,9 +108,7 @@ contract Quiz
         require(players.length < N, "Player space is full");
         require(msg.value > pFee, "Insufficient funds sent");
 
-        // Units of fee?
         pendingReturns[msg.sender] = msg.value - pFee;
-        // Subtract the  pFee here
         players.push(Player({
             addr: msg.sender
         }));
@@ -114,81 +116,53 @@ contract Quiz
         emit playerRegistered(msg.sender);
     }
 
-
-
-
-
-    function addQuestion(string _statement,/*  string[] _opts,  uint _ansInd*/ string _ans) // bytes32 uses less gas than string
+    /* Moderator adds a question consisting of a statement(string) and ans (string) */
+    function addQuestion(string _statement, string _ans)
     onlyBy(moderator)
     public
     {
         questions.push(Question({
             statement: _statement,
-            // options: _opts,
-            // ansInd: _ansInd
             ans: _ans
 
         }));
-        // add question to questions array
-        //TODO: prevent invalid question/options
     }
 
-    // Player should not be able to know a question in advance
-    // Player should get a question, and an identifier,
-    // TODO: some time constraint to answer the question, once it has been retrieved by player?
-
-    function getQuestion(uint _qInd) // should return statement and/or options somehow
+    /* Player gets a question statement by providing index (0 <= i < 4) */
+    function getQuestion(uint _qInd)
     isPlayer()
-    onlyBefore(quizEnded)
+    // onlyBefore(quizEnded)
     public
     returns(string)
     {
-        // require(playerQNo[msg.sender] ==  _qInd-1, "You are accessing an invalid question");
-        // if (playerQNo[msg.sender] == _qInd-1){
-        // playerQNo[msg.sender] = _qInd;
-        require(_qInd < 4, "Invalid index for question");
-        // string[] memory res;
+        require(_qInd >= 0 && _qInd < 4, "Invalid index for question");
+
         string question = questions[_qInd].statement;
-        // string[] memory options = questions[_qInd].options;
-        // res[0]=question;
-        // for(uint i=1;i<=options.length;i++)
-        // {
-            // res[i] = options[i-1];
-        // }
         return question;
     }
 
-    function compareStrings (string a, string b)
-    view
+    /* Player answers a question providing index of the question, and the answer */
+    function answerQuestion(uint _qInd, string ans)
+    isPlayer()
+    // onlyBefore(quizEnded)
+    public
     returns (bool)
     {
-       return keccak256(a) == keccak256(b);
-    }
-
-    // Player should be able to answer a question,
-    function answerQuestion(uint _qInd/* , uint optNo */, string ans) // Args? quesIdentifier, ansIndex
-    isPlayer()
-    onlyBefore(quizEnded)
-    public
-    {
-        // require(playerQNo[msg.sender] == _qInd, "Answering wrong question.");
-        // require(playerAnsNo[msg.sender] != _qInd, "You already answered this question.");
-        // if(questions[_qInd].ansInd == optNo)
-       /*  if(compareStrings(questions[_qInd].ans, ans))
+        for(uint i=0;i<winners[_qInd].length;i++)
         {
-            QWinPlayers[_qInd].push(msg.sender);
-        } */
-        QWinPlayers[_qInd].push(msg.sender);
-
-        // playerAnsNo[msg.sender]=_qInd;
+            if(msg.sender == winners[_qInd][i])
+            {
+                return false;
+            }
+        }
+        if(compareStrings(questions[_qInd].ans, ans))
+        {
+            winners[_qInd].push(msg.sender);
+        }
+        return true;
     }
-    // Check whether answers given by players are correct or incorrect
-    // function checkAnswers()
-    // onlyBy(moderator)
-    // {
 
-    // }
-
+    /* After all the players have answered, the prize for each winner is determined */
     function prizeDetermine()
     // onlyAfter(quizEnded)
     onlyBy(moderator)
@@ -196,13 +170,13 @@ contract Quiz
     {
         for(uint i=0;i<4;i++)
         {
-            if(QWinPlayers[i].length > 0)
+            if(winners[i].length > 0)
             {
-                uint256 reward = (3*tFee)/(16*QWinPlayers[i].length);
+                uint256 reward = (3*tFee)/(16*winners[i].length);
                 prizeDetHelper(i, reward);
             }
         }
-        prizeDet = true;
+        prizeDetermined = true;
     }
 
     function prizeDetHelper(uint _qInd, uint256 reward)
@@ -210,15 +184,16 @@ contract Quiz
     // onlyAfter(quizEnded)
     private
     {
-        for(uint i=0; i<QWinPlayers[_qInd].length;i++)
+        for(uint i=0; i<winners[_qInd].length;i++)
         {
-            pendingReturns[QWinPlayers[_qInd][i]] += reward;
+            pendingReturns[winners[_qInd][i]] += reward;
         }
     }
 
+    /* Player withdraws his winnnings, if any */
     function withdraw()
-    onlyAfter(quizEnded)
-    onlyIfTrue(prizeDet)
+    // onlyAfter(quizEnded)
+    onlyIfTrue(prizeDetermined)
     public
     returns (bool)
     {

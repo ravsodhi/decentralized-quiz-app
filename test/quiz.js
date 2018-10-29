@@ -71,6 +71,22 @@ contract('Full Test', (accounts) => {
             assert.fail("Questions not added");
         }
     })
+    it('Get invalid question', async() =>{
+        try{
+            const q1 = await contractInstance.getQuestion.call(-1, { from: player1 });
+            assert.fail("Invalid index recognized");
+        }
+        catch(e){
+            assert.ok("True", "Invalid index not recognized");
+        }
+        try{
+            const q1 = await contractInstance.getQuestion.call(4, { from: player1 });
+            assert.fail("Invalid index recognized");
+        }
+        catch (e) {
+            assert.ok("True", "Invalid index not recognized");
+        }
+    })
     it('Get Questions', async()=>{
         try{
             const q1 = await contractInstance.getQuestion.call(0, { from: player1 });
@@ -78,9 +94,9 @@ contract('Full Test', (accounts) => {
             const q3 = await contractInstance.getQuestion.call(2, { from: player3 });
 
             // const q = await contractInstance.questions(0);
-            console.log(q1);
-            console.log(q2);
-            console.log(q3);
+            assert.equal(q1, "What is 2 + 2?", "Question are not same");
+            assert.equal(q2, "What is 5 + 1?", "Question are not same");
+            assert.equal(q3, "What is 9 + 11?", "Question are not same");
             assert.ok("True", "Question fetched successfully");
         }
         catch(e){
@@ -89,13 +105,23 @@ contract('Full Test', (accounts) => {
     })
     it('Answer Questions', async()=>{
         try{
-            await contractInstance.answerQuestion(0, "4", {from: player1});
-            assert.ok("True", "Question answered successfully");
-            const x = await contractInstance.QWinPlayers(0, 0);
-            assert.equal(x, player1, "The address of the winner doesn't match");
+            await contractInstance.answerQuestion(0, "4", { from: player1 });
+            await contractInstance.answerQuestion(0, "4", { from: player2 });
+            await contractInstance.answerQuestion(0, "5", { from: player3 });
 
-            console.log(x);
-            console.log(player1);
+            assert.ok("True", "Question answered successfully");
+            const w1 = await contractInstance.winners(0, 0);
+            const w2 = await contractInstance.winners(0, 1);
+            try{
+                const w3 = await contractInstance.winners(0, 2);
+                assert.fail("Invalid index call was successful");
+            }
+            catch(ee){
+                assert.ok("True", "Invalid index for winner");
+            }
+
+            assert.equal(w1, player1, "The address of the winner doesn't match");
+            assert.equal(w2, player2, "The address of the winner doesn't match");
         }
         catch(e){
             assert.fail("Question not answered");
@@ -110,6 +136,29 @@ contract('Full Test', (accounts) => {
         }
         catch(e){
             assert.fail("Prize determination unsuccessful");
+        }
+    })
+    it('Withdraw', async() =>{
+        try{
+            await contractInstance.withdraw({ from: player1 });
+            await contractInstance.withdraw({ from: player2 });
+            await contractInstance.withdraw({ from: player3 });
+            await contractInstance.withdraw({ from: player4 });
+
+            const p1 = await contractInstance.pendingReturns(player1);
+            const p2 = await contractInstance.pendingReturns(player2);
+            const p3 = await contractInstance.pendingReturns(player3);
+            const p4 = await contractInstance.pendingReturns(player4);
+
+            assert.equal(p1.c[0], 0, "Error in withdrawal");
+            assert.equal(p2.c[0], 0, "Error in withdrawal");
+            assert.equal(p3.c[0], 0, "Error in withdrawal");
+            assert.equal(p4.c[0], 0, "Error in withdrawal");
+
+            assert.ok("True", "Player was able to withdraw successfully");
+        }
+        catch(e){
+            assert.fail("Player unable to withdraw")
         }
     })
 })
