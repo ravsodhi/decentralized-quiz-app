@@ -9,7 +9,7 @@ contract Quiz
     uint256 public quizStart;
     bool public prizeDet=false;
     // bool quizEnded = false;
-    mapping(address => uint256) pendingReturns;
+    mapping(address => uint256) public pendingReturns;
     mapping(address =>  uint256[]) retrieveTime;
     mapping(address => uint) retrievedQNo;
     mapping(address => uint) playerQNo;
@@ -105,30 +105,17 @@ contract Quiz
         require(msg.value > pFee, "Insufficient funds sent");
 
         // Units of fee?
-        // pendingReturns[msg.sender] = msg.value;
+        pendingReturns[msg.sender] = msg.value - pFee;
         // Subtract the  pFee here
         players.push(Player({
             addr: msg.sender
         }));
-        tFee +=pFee;
+        tFee += pFee;
         emit playerRegistered(msg.sender);
     }
 
 
-    function withdraw()
-    onlyAfter(quizEnded)
-    onlyIfTrue(prizeDet)
-    public
-    returns (bool)
-    {
-        uint256 amount = pendingReturns[msg.sender];
-        if (amount > 0)
-        {
-            pendingReturns[msg.sender] = 0;
-            msg.sender.transfer(amount);
-        }
-        return true;
-    }
+
 
 
     function addQuestion(string _statement,/*  string[] _opts,  uint _ansInd*/ string _ans) // bytes32 uses less gas than string
@@ -170,12 +157,14 @@ contract Quiz
         // }
         return question;
     }
+
     function compareStrings (string a, string b)
     view
     returns (bool)
     {
        return keccak256(a) == keccak256(b);
     }
+
     // Player should be able to answer a question,
     function answerQuestion(uint _qInd/* , uint optNo */, string ans) // Args? quesIdentifier, ansIndex
     isPlayer()
@@ -200,22 +189,25 @@ contract Quiz
 
     // }
 
-    function prizeDetermine(uint _qInd)
-    onlyAfter(quizEnded)
+    function prizeDetermine()
+    // onlyAfter(quizEnded)
     onlyBy(moderator)
-    private
+    public
     {
-        for(uint i=1;i<5;i++)
+        for(uint i=0;i<4;i++)
         {
-            uint reward = (3*tFee)/(16*QWinPlayers[_qInd].length);
-            prizeDetHelper(i, reward);
+            if(QWinPlayers[i].length > 0)
+            {
+                uint256 reward = (3*tFee)/(16*QWinPlayers[i].length);
+                prizeDetHelper(i, reward);
+            }
         }
         prizeDet = true;
     }
 
     function prizeDetHelper(uint _qInd, uint256 reward)
     onlyBy(moderator)
-    onlyAfter(quizEnded)
+    // onlyAfter(quizEnded)
     private
     {
         for(uint i=0; i<QWinPlayers[_qInd].length;i++)
@@ -224,4 +216,18 @@ contract Quiz
         }
     }
 
+    function withdraw()
+    onlyAfter(quizEnded)
+    onlyIfTrue(prizeDet)
+    public
+    returns (bool)
+    {
+        uint256 amount = pendingReturns[msg.sender];
+        if (amount > 0)
+        {
+            pendingReturns[msg.sender] = 0;
+            msg.sender.transfer(amount);
+        }
+        return true;
+    }
 }

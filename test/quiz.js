@@ -91,11 +91,25 @@ contract('Full Test', (accounts) => {
         try{
             await contractInstance.answerQuestion(0, "4", {from: player1});
             assert.ok("True", "Question answered successfully");
-            // const x = await contractInstance.QWinPlayers(0);
-            // console.log(x);
+            const x = await contractInstance.QWinPlayers(0, 0);
+            assert.equal(x, player1, "The address of the winner doesn't match");
+
+            console.log(x);
+            console.log(player1);
         }
         catch(e){
             assert.fail("Question not answered");
+        }
+    })
+    it('Prize determination', async()=>{
+        try{
+            await contractInstance.prizeDetermine({from: moderator});
+            assert.ok("True", "Prize determined successfully");
+            const x = await contractInstance.pendingReturns(player1);
+            console.log(x.c[0]);
+        }
+        catch(e){
+            assert.fail("Prize determination unsuccessful");
         }
     })
 })
