@@ -139,10 +139,19 @@ contract('Full Test', (accounts) => {
     })
     it('Prize determination', async()=>{
         try{
+            await contractInstance.addQuestion("What is 2 + 2?", "4", { from: moderator });
+            await contractInstance.answerQuestion(0, "4", { from: player1 });
+            const e1 = await contractInstance.pendingReturns(player1);
+            // console.log("blabla");
             await contractInstance.prizeDetermine({from: moderator});
+            
+            const reward = await contractInstance.que_reward(0);
+            const e2 = await contractInstance.pendingReturns(player1);
+            assert.equal(e2 - e1, reward, "reward not added");
+
             assert.ok("True", "Prize determined successfully");
-            const x = await contractInstance.pendingReturns(player1);
-            console.log(x.c[0]);
+            // const x = await contractInstance.pendingReturns(player1);
+            // console.log(x.c[0]);
         }
         catch(e){
             assert.fail("Prize determination unsuccessful");
@@ -150,10 +159,31 @@ contract('Full Test', (accounts) => {
     })
     it('Withdraw', async() =>{
         try{
+
+            const e1 = await contractInstance.pendingReturns(player1);
+            const e2 = await contractInstance.pendingReturns(player2);
+            const e3 = await contractInstance.pendingReturns(player3);
+            const e4 = await contractInstance.pendingReturns(player4);
+
+            // balance of contract before withdrawing
+            const balance = await contractInstance.getBalance({ from: player1 });
+            
             await contractInstance.withdraw({ from: player1 });
+            // balance after withdrawing
+            const balance1 = await contractInstance.getBalance({ from: player1 });
+            assert.equal(balance - balance1, e1, "Didn't match");
+
             await contractInstance.withdraw({ from: player2 });
+            const balance2 = await contractInstance.getBalance({ from: player2 });
+            assert.equal(balance1 - balance2, e2, "Didn't match");
+
             await contractInstance.withdraw({ from: player3 });
+            const balance3 = await contractInstance.getBalance({ from : player3 });
+            assert.equal(balance2 - balance3, e3, "Didn't match");
+
             await contractInstance.withdraw({ from: player4 });
+            const balance4 = await contractInstance.getBalance({ from: player4 });
+            assert.equal(balance3 - balance4, e4, "Didn't match");
 
             const p1 = await contractInstance.pendingReturns(player1);
             const p2 = await contractInstance.pendingReturns(player2);

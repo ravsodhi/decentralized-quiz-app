@@ -10,6 +10,8 @@ contract Quiz
     bool public prizeDetermined=false;
     mapping(address => uint256) public pendingReturns;
     mapping(uint => address[]) public winners;
+    mapping(uint => uint) public que_reward;
+    mapping(address => uint[]) private answered;
 
     struct Player
     {
@@ -106,7 +108,7 @@ contract Quiz
     public
     {
         require(players.length < N, "Player space is full");
-        require(msg.value > pFee, "Insufficient funds sent");
+        require(msg.value >= pFee, "Insufficient funds sent");
 
         pendingReturns[msg.sender] = msg.value - pFee;
         players.push(Player({
@@ -148,13 +150,19 @@ contract Quiz
     public
     returns (bool)
     {
-        for(uint i=0;i<winners[_qInd].length;i++)
-        {
-            if(msg.sender == winners[_qInd][i])
-            {
+        // for(uint i=0;i<winners[_qInd].length;i++)
+        // {
+        //     if(msg.sender == winners[_qInd][i])
+        //     {
+        //         return false;
+        //     }
+        // }
+        for (uint i = 0;i<answered[msg.sender].length;i++) {
+            if (answered[msg.sender][i] == _qInd) {
                 return false;
             }
         }
+        answered[msg.sender].push(_qInd);
         if(compareStrings(questions[_qInd].ans, ans))
         {
             winners[_qInd].push(msg.sender);
@@ -164,24 +172,26 @@ contract Quiz
 
     /* After all the players have answered, the prize for each winner is determined */
     function prizeDetermine()
-    onlyAfter(quizEnded)
-    onlyBy(moderator)
+    // onlyAfter(quizEnded)
+    // onlyBy(moderator)
     public
     {
         for(uint i=0;i<4;i++)
         {
+            uint256 reward = 0;
             if(winners[i].length > 0)
             {
-                uint256 reward = (3*tFee)/(16*winners[i].length);
+                reward = (3*tFee)/(16*winners[i].length);
                 prizeDetHelper(i, reward);
             }
+            que_reward[i] = reward;
         }
         prizeDetermined = true;
     }
 
     function prizeDetHelper(uint _qInd, uint256 reward)
-    onlyBy(moderator)
-    onlyAfter(quizEnded)
+    // onlyBy(moderator)
+    // onlyAfter(quizEnded)
     private
     {
         for(uint i=0; i<winners[_qInd].length;i++)
@@ -192,8 +202,8 @@ contract Quiz
 
     /* Player withdraws his winnnings, if any */
     function withdraw()
-    onlyAfter(quizEnded)
-    onlyIfTrue(prizeDetermined)
+    // onlyAfter(quizEnded)
+    // onlyIfTrue(prizeDetermined)
     public
     returns (bool)
     {
