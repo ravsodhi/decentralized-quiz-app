@@ -16,6 +16,8 @@ contract('Full Test', (accounts) => {
     it('Register with 99 wei', async () => {
         try {
             await contractInstance.register({ value: web3.toWei(0.000000000000000099, "ether"), from: player1 });
+            const balance = await contractInstance.getBalance({from : player1});
+            assert.equal(web3.toWei(0.000000000000000099, "ether"), balance);
             assert.fail("Player registered");
         }
         catch (e) {
@@ -25,6 +27,8 @@ contract('Full Test', (accounts) => {
     it('Register with 101 wei', async() => {
         try{
             await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player1 });
+            const balance = await contractInstance.getBalance({ from: player1 });
+            assert.equal(web3.toWei(0.000000000000000101, "ether"), balance);
             assert.ok("True", "Player registration was succesful");
         }
         catch(e){
@@ -43,8 +47,14 @@ contract('Full Test', (accounts) => {
     it('4 Registrations', async () => {
         try {
             await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player2 });
+            const balance1 = await contractInstance.getBalance({ from: player2 });
+            assert.equal(web3.toWei(0.000000000000000202, "ether"), balance1);
             await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player3 });
+            const balance2 = await contractInstance.getBalance({ from: player3 });
+            assert.equal(web3.toWei(0.000000000000000303, "ether"), balance2);
             await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player4 });
+            const balance3 = await contractInstance.getBalance({ from: player4 });
+            assert.equal(web3.toWei(0.000000000000000404, "ether"), balance3);
             assert.ok("True", "Player registered");
         }
         catch (e) {
