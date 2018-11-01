@@ -131,7 +131,7 @@ contract Quiz
     /* Player gets a question statement by providing index (0 <= i < 4) */
     function getQuestion(uint _qInd)
     isPlayer()
-    // onlyBefore(quizEnded)
+    onlyBefore(quizEnded)
     public
     returns(string)
     {
@@ -144,7 +144,7 @@ contract Quiz
     /* Player answers a question providing index of the question, and the answer */
     function answerQuestion(uint _qInd, string ans)
     isPlayer()
-    // onlyBefore(quizEnded)
+    onlyBefore(quizEnded)
     public
     returns (bool)
     {
@@ -164,7 +164,7 @@ contract Quiz
 
     /* After all the players have answered, the prize for each winner is determined */
     function prizeDetermine()
-    // onlyAfter(quizEnded)
+    onlyAfter(quizEnded)
     onlyBy(moderator)
     public
     {
@@ -181,7 +181,7 @@ contract Quiz
 
     function prizeDetHelper(uint _qInd, uint256 reward)
     onlyBy(moderator)
-    // onlyAfter(quizEnded)
+    onlyAfter(quizEnded)
     private
     {
         for(uint i=0; i<winners[_qInd].length;i++)
@@ -192,7 +192,7 @@ contract Quiz
 
     /* Player withdraws his winnnings, if any */
     function withdraw()
-    // onlyAfter(quizEnded)
+    onlyAfter(quizEnded)
     onlyIfTrue(prizeDetermined)
     public
     returns (bool)
