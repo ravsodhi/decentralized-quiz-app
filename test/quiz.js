@@ -4,6 +4,10 @@ const assert = require('assert')
 let contractInstance
 
 contract('Full Test', (accounts) => {
+    const sleep = (seconds) => {
+        return new Promise(resolve => setTimeout(resolve, seconds * 1000))
+    }
+
     const moderator = accounts[0];
     const player1 = accounts[1];
     const player2 = accounts[2];
@@ -142,7 +146,8 @@ contract('Full Test', (accounts) => {
             await contractInstance.addQuestion("What is 2 + 2?", "4", { from: moderator });
             await contractInstance.answerQuestion(0, "4", { from: player1 });
             const e1 = await contractInstance.pendingReturns(player1);
-            // console.log("blabla");
+
+            await sleep(100);
             await contractInstance.prizeDetermine({from: moderator});
             
             const reward = await contractInstance.que_reward(0);
@@ -199,6 +204,69 @@ contract('Full Test', (accounts) => {
         }
         catch(e){
             assert.fail("Player unable to withdraw")
+        }
+    })
+})
+
+contract('Add Question after Quiz Duration', (accounts) => {
+    const sleep = (seconds) => {
+        return new Promise(resolve => setTimeout(resolve, seconds * 1000))
+    }
+
+    const moderator = accounts[0];
+    const player1 = accounts[1];
+    const player2 = accounts[2];
+    const player3 = accounts[3];
+    const player4 = accounts[4];
+    const player5 = accounts[5];
+    beforeEach(async () => {
+        contractInstance = await Quiz.deployed({ from: moderator });
+    })
+    it('Register with 101 wei', async() => {
+        try{
+            await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player1 });
+            const balance = await contractInstance.getBalance({ from: player1 });
+            assert.equal(web3.toWei(0.000000000000000101, "ether"), balance);
+            assert.ok("True", "Player registration was succesful");
+        }
+        catch(e){
+            assert.fail("Player not registered");
+        }
+    })
+    it('4 Registrations', async () => {
+        try {
+            await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player2 });
+            const balance1 = await contractInstance.getBalance({ from: player2 });
+            assert.equal(web3.toWei(0.000000000000000202, "ether"), balance1);
+            await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player3 });
+            const balance2 = await contractInstance.getBalance({ from: player3 });
+            assert.equal(web3.toWei(0.000000000000000303, "ether"), balance2);
+            await contractInstance.register({ value: web3.toWei(0.000000000000000101, "ether"), from: player4 });
+            const balance3 = await contractInstance.getBalance({ from: player4 });
+            assert.equal(web3.toWei(0.000000000000000404, "ether"), balance3);
+            assert.ok("True", "Player registered");
+        }
+        catch (e) {
+            assert.fail("Player not registered");
+        }
+    })
+    it('Add Questions before Quiz Duration', async()=>{
+        try{
+            await contractInstance.addQuestion("What is 9 + 11?", "20", { from: moderator });
+            assert.ok("True", "Question added");
+        }
+        catch(e){
+            assert.fail("Question not added");
+        }
+    })
+    it('Add Questions after Quiz Duration', async()=>{
+        try{
+            await sleep(100);
+            await contractInstance.addQuestion("What is 2 + 2?", "4", {from: moderator});
+            assert.fail("Questions added");
+        }
+        catch(e){
+            assert.ok("True", "Questions not added");
         }
     })
 })

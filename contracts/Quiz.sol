@@ -53,7 +53,7 @@ contract Quiz
     modifier isNotPlayer()
     {
         bool flag = false;
-        for(uint i=0; i< players.length; i++)
+        for(uint i=0; i < players.length; i++)
         {
             if(msg.sender == players[i].addr)
             {
@@ -66,7 +66,7 @@ contract Quiz
     modifier isPlayer()
     {
         bool flag = false;
-        for(uint i=0; i< players.length; i++)
+        for(uint i=0; i < players.length; i++)
         {
             if(msg.sender == players[i].addr)
             {
@@ -172,8 +172,8 @@ contract Quiz
 
     /* After all the players have answered, the prize for each winner is determined */
     function prizeDetermine()
-    // onlyAfter(quizEnded)
-    // onlyBy(moderator)
+    onlyAfter(quizEnded)
+    onlyBy(moderator)
     public
     {
         for(uint i=0;i<4;i++)
@@ -190,8 +190,8 @@ contract Quiz
     }
 
     function prizeDetHelper(uint _qInd, uint256 reward)
-    // onlyBy(moderator)
-    // onlyAfter(quizEnded)
+    onlyBy(moderator)
+    onlyAfter(quizEnded)
     private
     {
         for(uint i=0; i<winners[_qInd].length;i++)
@@ -202,8 +202,8 @@ contract Quiz
 
     /* Player withdraws his winnnings, if any */
     function withdraw()
-    // onlyAfter(quizEnded)
-    // onlyIfTrue(prizeDetermined)
+    onlyAfter(quizEnded)
+    onlyIfTrue(prizeDetermined)
     public
     returns (bool)
     {
